@@ -52,7 +52,7 @@ class RAW_Base(data.Dataset):
                         continue
                 img_exposure = float(os.path.split(img_file)[-1][9:-5]) # 0.04
                 lbl_exposure = float(os.path.split(lbl_file)[-1][9:-5]) # 10
-                ratio = min(lbl_exposure/img_exposure, 300)
+                ratio = min(lbl_exposure/img_exposure, 300)  #? Amplification ratio, gamma
                 if self.gt_png:
                     lbl_file = lbl_file.replace("long", "gt").replace(self.raw_ext, "png")
                 self.img_info.append({
@@ -81,7 +81,7 @@ class RAW_Base(data.Dataset):
         raw = rawpy.imread(os.path.join(self.root, img_file))
         self.raw_short_read_time.update(time.time() - start)
         start = time.time()
-        input_full = self.pack_raw(raw) * info['ratio']
+        input_full = self.pack_raw(raw) * info['ratio']  #? Amplification ratio, gamma
         self.raw_short_pack_time.update(time.time() - start)
 
         scale_full = np.zeros((1, 1, 1), dtype=np.float32)
@@ -154,11 +154,55 @@ class Sony(RAW_Base):
         H = img_shape[0]
         W = img_shape[1]
 
-        out = np.concatenate((im[0:H:2, 0:W:2, :],
-                              im[0:H:2, 1:W:2, :],
-                              im[1:H:2, 1:W:2, :],
-                              im[1:H:2, 0:W:2, :]), axis=2)
+        out = np.concatenate((im[0:H:2, 0:W:2, :],   # RED (top-left)
+                              im[0:H:2, 1:W:2, :],   # GREEN (top-right)
+                              im[1:H:2, 1:W:2, :],   # BLUE (bottom-right)
+                              im[1:H:2, 0:W:2, :]),  # GREEN (bottom-left)
+                              axis=2)
         return out
+
+class OnePlus_7_Pro(RAW_Base):
+    def __init__(self, root, image_list_file, split='train', patch_size=None, gt_png=True, use_camera_wb=False,
+                 upper=None):
+        super(OnePlus_7_Pro, self).__init__(root, image_list_file, split=split, patch_size=patch_size,
+                                      gt_png=gt_png, use_camera_wb=use_camera_wb, raw_ext='DNG', upper=upper)
+
+    def pack_raw(self, raw):
+        # Access the raw image data
+        raw_image = raw.raw_image_visible.astype(np.float32)
+
+        # Subtract the black level and normalize
+        black_level = raw.black_level_per_channel[0]
+        raw_image = np.maximum(raw_image - black_level, 0) / (raw.white_level - black_level)
+
+        # Get the Bayer pattern
+        bayer_pattern = raw.raw_pattern
+
+        # Determine the shape of the raw image
+        H, W = raw_image.shape
+
+        # Create an empty array for the RGBG image
+        # Size is half of the original image size, and 4 channels for RGBG
+        # dtype=np.float32 is used to match the data type of raw_image
+        packed_image = np.zeros((H // 2, W // 2, 4), dtype=np.float32)
+
+        # The Bayer pattern and color description for Quad Bayer:
+        # Prints:
+        # "[[2 3]
+        #  [1 0]]"
+        # and "RGBG", i.e.
+        # [[B  G]
+        #  [G  R]]
+        #print("Bayer pattern:\n", bayer_pattern)
+        #print("Color description:\n", raw.color_desc)
+
+        packed_image[:, :, bayer_pattern[0, 0]] = raw_image[0:H:2, 0:W:2]     # Top-left pixel (BLUE) to third channel
+        packed_image[:, :, bayer_pattern[0, 1]] = raw_image[0:H:2, 1:W:2]     # Top-right pixel (GREEN) to fourth (last) channel
+        packed_image[:, :, bayer_pattern[1, 0]] = raw_image[1:H:2, 0:W:2]     # Bottom-left pixel (GREEN) to second channel
+        packed_image[:, :, bayer_pattern[1, 1]] = raw_image[1:H:2, 1:W:2]     # Bottom-right pixel (RED) to first channel
+        # The packed_image now contains the RGBG channels in the order: [R, G, B, G]
+
+        return packed_image
 
 class Fuji(RAW_Base):
     def __init__(self, root, image_list_file, split='train', patch_size=None, gt_png=True, use_camera_wb=False,
