@@ -1,0 +1,11 @@
+# Folders
+__pycache__
+checkpoint
+dataset
+log
+postprocessed_images
+result
+
+# Weight files
+*.pth
+*.pkl
