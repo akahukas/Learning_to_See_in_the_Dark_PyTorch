@@ -6,7 +6,8 @@ import torch
 import shutil
 import pickle
 import numpy as np
-from skimage.measure import compare_ssim, compare_psnr
+#from skimage.measure import compare_ssim, compare_psnr # deprecated
+from skimage.metrics import structural_similarity as compare_ssim, peak_signal_noise_ratio as compare_psnr
 
 def load_state_dict(model, fname):
     """
@@ -52,5 +53,9 @@ def get_psnr(im1, im2):
     return compare_psnr(im1, im2, data_range=255)
 
 def get_ssim(im1, im2):
-    return compare_ssim(im1, im2, data_range=255, gaussian_weights=True, use_sample_covariance=False, multichannel=True)
+    #return compare_ssim(im1, im2, data_range=255, gaussian_weights=True, use_sample_covariance=False, multichannel=True)  # Original line
+
+    # Ensure that the win_size doesn't exceed the image extent
+    win_size = min(im1.shape[-2], im1.shape[-1], 7)
+    return compare_ssim(im1, im2, data_range=255, gaussian_weights=True, use_sample_covariance=False, multichannel=True, win_size=win_size)
 
