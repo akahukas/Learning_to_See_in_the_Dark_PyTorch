@@ -1,5 +1,11 @@
 ## Learning to See in the Dark in PyTorch.
 
+This repo adds the possibility to input RAW dng files captured with the OnePlus 7 Pro to the network.
+
+Some deprecated methods have also been replaced, such as `skimage.measure.compare_psnr` with `skimage.metrics.peak_signal_noise_ratio`.
+
+---
+
 This repo implements `Learning to See in the Dark` models presented in [1].
 
 
@@ -31,6 +37,7 @@ python demo.py train <options>
 * `--arch_type` camera model type (default: `Sony`): 
     - `Sony` for Sony camera(Sony alpha 7S II)
     - `Fuji` for Fujifilm camera(Fujifilm X-T2)
+    - `OnePlus_7_Pro` for OnePlus 7 Pro camera
 * `--dataset_dir` dataset directory(default: `./dataset/`)
 * `--tf_weight_file` weight file converted from authors' TensorFlow models(see [here](#pretrained-models))(default: ``)
 * `--resume` If set, checkpoint file used in `train` or `test` for PyTorch (default: `./checkpoint/Sony/`)
@@ -58,12 +65,12 @@ The following weight files are models converted from
 and models trained from scratch by codes in this repo(third row).
 I converted the authors TensorFlow checkpoint files to pickle format to load their weight values into PyTorch models. 
 
-|camera|download link|memo|
-| :--- | :---: | :---: |
-|Sony|[link](https://drive.google.com/open?id=1ZccOIyp674cVIDrEQnUGcd2effZeu5FO)|converted from TensorFlow model|
-|Fuji|[link](https://drive.google.com/open?id=1Gl453ex_ADbrQiDowCZYveHWXug-Rcsl)|converted from TensorFlow model|
-|Sony|[link](https://drive.google.com/open?id=1iEdL_zGrtVkfTEATKqmi4BPxzT-o3NFN)|trained model using this repo from scratch|
-|Fuji|- | not trained by this repo|
+| camera |                               download link                                |                    memo                    |
+| :----- | :------------------------------------------------------------------------: | :----------------------------------------: |
+| Sony   | [link](https://drive.google.com/open?id=1ZccOIyp674cVIDrEQnUGcd2effZeu5FO) |      converted from TensorFlow model       |
+| Fuji   | [link](https://drive.google.com/open?id=1Gl453ex_ADbrQiDowCZYveHWXug-Rcsl) |      converted from TensorFlow model       |
+| Sony   | [link](https://drive.google.com/open?id=1iEdL_zGrtVkfTEATKqmi4BPxzT-o3NFN) | trained model using this repo from scratch |
+| Fuji   |                                     -                                      |          not trained by this repo          |
 
 
 ### Dataset
@@ -79,13 +86,13 @@ Two types of test data are used:
   * "00 only": as written in [here](https://github.com/cchen156/Learning-to-See-in-the-Dark#dataset) 
     "00" means the number in the sequence/burst in the RAW file names like `./Sony/short/10003_00_0.04s.ARW`.
 
-|model|test data|Sony(PSNR/SSIM(#images))|Fuji(PSNR/SSIM(#images))|
-| :--- | :---: | :---: | :---: |
-|paper[1]|-|28.88/0.787|26.61/0.680|
-|converted from TensorFlow|all|28.88/0.7980(598)|27.01/0.7241(524)|
-|converted from TensorFlow|00 only|28.59/0.7831(93)|26.61/0.7040(94)|
-|trained from scratch|all|28.55/0.7878(598)|-|
-|trained from scratch|00 only|28.25/0.7721(93)|-|
+| model                     | test data | Sony(PSNR/SSIM(#images)) | Fuji(PSNR/SSIM(#images)) |
+| :------------------------ | :-------: | :----------------------: | :----------------------: |
+| paper[1]                  |     -     |       28.88/0.787        |       26.61/0.680        |
+| converted from TensorFlow |    all    |    28.88/0.7980(598)     |    27.01/0.7241(524)     |
+| converted from TensorFlow |  00 only  |     28.59/0.7831(93)     |     26.61/0.7040(94)     |
+| trained from scratch      |    all    |    28.55/0.7878(598)     |            -             |
+| trained from scratch      |  00 only  |     28.25/0.7721(93)     |            -             |
 
 ### Some Results
 
