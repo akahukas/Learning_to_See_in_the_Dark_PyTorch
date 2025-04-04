@@ -39,7 +39,7 @@ def get_parameters(model, bias=False):
 def main():
     parser = argparse.ArgumentParser("Learning to See in the Dark PyTorch")
     parser.add_argument('cmd', type=str,  choices=['train', 'test'], help='train or test')
-    parser.add_argument('--arch_type', type=str, default='Sony', help='camera model type', choices=['Sony', 'Fuji'])
+    parser.add_argument('--arch_type', type=str, default='Sony', help='camera model type', choices=['Sony', 'Fuji', 'OnePlus_7_Pro'])
     parser.add_argument('--dataset_dir', type=str, default='./dataset/', help='dataset directory')
     parser.add_argument('--log_file', type=str, default='./log/Sony/test.log', help='log file')
     parser.add_argument('--train_img_list_file', type=str, default='./dataset/Sony_train_list.txt',
@@ -116,7 +116,7 @@ def main():
     # 2. model
     if 'Fuji' in args.arch_type:
         model = LSID.lsid(inchannel=9, block_size=3)
-    else: # Sony
+    else: # Sony or OnePlus_7_Pro
         model = LSID.lsid(inchannel=4, block_size=2)
     print(model)
 
