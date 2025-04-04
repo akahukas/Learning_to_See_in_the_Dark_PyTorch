@@ -15,6 +15,8 @@ import utils
 import tqdm
 import copy
 
+# Replace scipy.misc.toimage with PIL due to deprecation
+from PIL import Image
 
 class Trainer(object):
 
@@ -84,7 +86,8 @@ class Trainer(object):
                                                        self.iteration, self.epoch), ncols=80, leave=False):
             gc.collect()
             if self.cuda:
-                raws, targets = raws.cuda(), targets.cuda(async=True)
+                #raws, targets = raws.cuda(), targets.cuda(async=True)        # Original line
+                raws, targets = raws.cuda(), targets.cuda(non_blocking=True)  # Modified due to version change
 
             with torch.no_grad():
                 raws = Variable(raws)
@@ -111,9 +114,11 @@ class Trainer(object):
                         os.makedirs(self.result_dir, exist_ok=True)
                         fname = os.path.join(self.result_dir, '{}_compare.jpg'.format(os.path.basename(img_file)[:-4]))
                         temp = np.concatenate((target[:, :, :], output[:, :, :]), axis=1)
-                        scipy.misc.toimage(temp, high=255, low=0, cmin=0, cmax=255).save(fname)
+                        #scipy.misc.toimage(temp, high=255, low=0, cmin=0, cmax=255).save(fname)  # Deprecated
+                        Image.fromarray(temp.astype(np.uint8)).save(fname)
                         fname = os.path.join(self.result_dir, '{}_single.jpg'.format(os.path.basename(img_file)[:-4]))
-                        scipy.misc.toimage(output, high=255, low=0, cmin=0, cmax=255).save(fname)
+                        #scipy.misc.toimage(output, high=255, low=0, cmin=0, cmax=255).save(fname)  # Deprecated
+                        Image.fromarray(output.astype(np.uint8)).save(fname)
 
                 # psnr.update(utils.get_psnr(output, target), 1)
                 _psnr = utils.get_psnr(output, target)
@@ -194,7 +199,8 @@ class Trainer(object):
                 self.validate()
 
             if self.cuda:
-                raws, targets = raws.cuda(), targets.cuda(async=True)
+                #raws, targets = raws.cuda(), targets.cuda(async=True)        # Original line
+                raws, targets = raws.cuda(), targets.cuda(non_blocking=True)  # Modified due to version change
             raws, targets = Variable(raws), Variable(targets)
 
             outputs = self.model(raws)
@@ -217,7 +223,8 @@ class Trainer(object):
                     os.makedirs(self.result_dir + '%04d' % self.epoch, exist_ok=True)
                     fname = self.result_dir + '{:04d}/{:04d}_{}.jpg'.format(self.epoch, batch_idx, os.path.basename(img_file)[:-4])
                     temp = np.concatenate((target[:, :, :], output[:, :, :]), axis=1)
-                    scipy.misc.toimage(temp, high=255, low=0, cmin=0, cmax=255).save(fname)
+                    #scipy.misc.toimage(temp, high=255, low=0, cmin=0, cmax=255).save(fname)  # Deprecated
+                    Image.fromarray(temp.astype(np.uint8)).save(fname)
 
             # backprop
             self.optim.zero_grad()
